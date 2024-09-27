@@ -1,5 +1,5 @@
 ---@class notify.Opts
----@field kind "begin" | "report" | "end"
+---@field kind any
 ---@field percentage integer | nil
 
 ---@class notify.Notification
@@ -19,17 +19,23 @@ local M = setmetatable({
   ---@param level integer | nil
   ---@param opts notify.Opts | nil
   __call = function(self, msg, level, opts)
-    if opts then
+    if opts and opts.kind then
       if opts.kind == "begin" then
         self.progresses[msg] = self.progresses[msg] or {}
         self.progresses[msg][level or 1] = 0
       elseif opts.kind == "report" then
         self.progresses[msg][level or 1] = opts.percentage or 0
-      else
+      elseif opts.kind == "end" then
         self.progresses[msg][level or 1] = nil
         if vim.tbl_isempty(self.progresses[msg]) then
           self.progresses[msg] = nil
         end
+      else
+        self.notifications[#self.notifications + 1] = {
+          time = tostring(os.date("%Y-%m-%d %H:%M:%S")),
+          level = level or 2,
+          message = msg,
+        }
       end
     else
       self.notifications[#self.notifications + 1] = {
